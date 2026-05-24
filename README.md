@@ -4,7 +4,7 @@ A production-quality Retrieval-Augmented Generation (RAG) chatbot built with
 **LangChain**, **ChromaDB**, and **OpenAI API** — featuring semantic search,
 context-aware multi-turn Q&A, and source attribution across custom PDF corpora.
 
-# Live Demo: https://rag-chatbot-lmhukkeswvwf9vhdosieru.streamlit.app/
+Live Demo: https://rag-chatbot-lmhukkeswvwf9vhdosieru.streamlit.app/
 
 ---
 
