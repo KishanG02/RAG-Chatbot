@@ -3,6 +3,7 @@ from langchain_community.vectorstores import Chroma
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
+from langchain.prompts import PromptTemplate, SystemMessagePromptTemplate, HumanMessagePromptTemplate, ChatPromptTemplate
 from dotenv import load_dotenv
 import os
 
@@ -46,23 +47,55 @@ def load_vectorstore():
 def build_rag_chain(vectorstore):
     llm = ChatGroq(
         model_name="llama-3.3-70b-versatile",
-        groq_api_key=os.getenv("GROQ_API_KEY")
+        groq_api_key=os.getenv("GROQ_API_KEY"),
+        temperature=0
     )
+
     retriever = vectorstore.as_retriever(
         search_type="similarity",
         search_kwargs={"k": 5}
     )
+
+    # Strict prompt — no hallucination
+    system_prompt = """You are a strict document assistant. You ONLY answer questions using the context extracted from the uploaded documents.
+
+RULES:
+- ONLY use information found in the context below
+- If the answer is not in the context, say exactly: "I could not find this information in the uploaded documents."
+- Do NOT use any outside knowledge or make assumptions
+- Do NOT guess or fill in missing details
+- Always mention which document your answer comes from
+- Keep answers concise and factual
+
+Context from uploaded documents:
+{context}"""
+
+    human_prompt = """Chat History:
+{chat_history}
+
+Question: {question}
+
+Answer strictly based on the documents only:"""
+
+    messages = [
+        SystemMessagePromptTemplate.from_template(system_prompt),
+        HumanMessagePromptTemplate.from_template(human_prompt)
+    ]
+    qa_prompt = ChatPromptTemplate.from_messages(messages)
+
     memory = ConversationBufferMemory(
         memory_key="chat_history",
         return_messages=True,
         output_key="answer"
     )
+
     chain = ConversationalRetrievalChain.from_llm(
         llm=llm,
         retriever=retriever,
         memory=memory,
         return_source_documents=True,
-        verbose=False
+        verbose=False,
+        combine_docs_chain_kwargs={"prompt": qa_prompt}
     )
     return chain
 
