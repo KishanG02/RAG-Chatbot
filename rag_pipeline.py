@@ -15,14 +15,22 @@ def get_embeddings():
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
-def build_vectorstore(chunks):
+def build_vectorstore(chunks, persist=False):
     embeddings = get_embeddings()
-    vectorstore = Chroma.from_documents(
-        documents=chunks,
-        embedding=embeddings,
-        persist_directory=CHROMA_PERSIST_DIR,
-        collection_name="rag_docs"
-    )
+    if persist:
+        vectorstore = Chroma.from_documents(
+            documents=chunks,
+            embedding=embeddings,
+            persist_directory=CHROMA_PERSIST_DIR,
+            collection_name="rag_docs"
+        )
+        vectorstore.persist()
+    else:
+        vectorstore = Chroma.from_documents(
+            documents=chunks,
+            embedding=embeddings,
+            collection_name="rag_docs"
+        )
     print(f"Stored {len(chunks)} vectors in ChromaDB")
     return vectorstore
 
